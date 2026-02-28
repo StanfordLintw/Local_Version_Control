@@ -412,6 +412,95 @@ app.get('/api/show', async (req, res) => {
     }
 });
 
+// ─── API: List project files (tree) ───────────────────────────────
+app.get('/api/files', async (req, res) => {
+    try {
+        // Use git ls-files to get tracked files, fall back to find
+        let fileList;
+        try {
+            const output = await gitExec(['ls-files'], currentWorkDir);
+            fileList = output.split('\n').filter(f => f.trim());
+        } catch {
+            // Not a git repo or no files tracked, use fs
+            const walk = (dir, prefix = '') => {
+                const results = [];
+                const entries = fs.readdirSync(dir, { withFileTypes: true });
+                for (const entry of entries) {
+                    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+                    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+                    if (entry.isDirectory()) {
+                        results.push(...walk(path.join(dir, entry.name), rel));
+                    } else {
+                        results.push(rel);
+                    }
+                }
+                return results;
+            };
+            fileList = walk(currentWorkDir);
+        }
+
+        // Build tree structure
+        const tree = [];
+        const folderMap = {};
+        fileList.forEach(filePath => {
+            const parts = filePath.split('/');
+            if (parts.length === 1) {
+                tree.push({ name: parts[0], type: 'file', path: filePath });
+            } else {
+                const folder = parts[0];
+                if (!folderMap[folder]) {
+                    folderMap[folder] = { name: folder, type: 'folder', path: folder, children: [] };
+                    tree.push(folderMap[folder]);
+                }
+                folderMap[folder].children.push({
+                    name: parts.slice(1).join('/'),
+                    type: 'file',
+                    path: filePath,
+                });
+            }
+        });
+
+        res.json({ success: true, files: tree, total: fileList.length });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// ─── API: Get file content ────────────────────────────────────────
+app.get('/api/file-content', (req, res) => {
+    try {
+        const { file } = req.query;
+        if (!file) {
+            return res.status(400).json({ success: false, message: '請提供檔案路徑' });
+        }
+        const fullPath = path.join(currentWorkDir, file);
+        // Security: ensure path is within workdir
+        if (!fullPath.startsWith(currentWorkDir)) {
+            return res.status(403).json({ success: false, message: '禁止存取此路徑' });
+        }
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ success: false, message: '檔案不存在' });
+        }
+        const stat = fs.statSync(fullPath);
+        if (stat.size > 500000) {
+            return res.json({ success: true, content: '(檔案過大，無法預覽)', language: 'text' });
+        }
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        // Detect language from extension
+        const ext = path.extname(file).toLowerCase().replace('.', '');
+        const langMap = {
+            js: 'javascript', ts: 'typescript', py: 'python',
+            html: 'html', css: 'css', json: 'json',
+            md: 'markdown', sh: 'bash', yml: 'yaml', yaml: 'yaml',
+            xml: 'xml', sql: 'sql', go: 'go', rs: 'rust',
+            java: 'java', rb: 'ruby', php: 'php', swift: 'swift',
+        };
+        res.json({ success: true, content, language: langMap[ext] || 'text', size: stat.size });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 // ─── Fallback: serve index.html ───────────────────────────────────
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

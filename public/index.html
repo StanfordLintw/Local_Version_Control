@@ -25,6 +25,7 @@
         </div>
       </div>
       <div class="flex items-center gap-md">
+        <button class="btn btn-ghost btn-sm" id="btn-faq" title="常見問題">💬 FAQ</button>
         <button class="btn btn-ghost btn-sm" id="btn-help" title="使用說明">❓ 說明</button>
         <span class="branch-badge" id="branch-badge">
           <span>⎇</span>
@@ -196,6 +197,31 @@
     </div>
   </div>
 
+  <!-- File Browser Section -->
+  <div class="card mb-md" id="file-browser-card">
+    <div class="card-header">
+      <div class="card-header-left">
+        <span class="card-header-icon">🗂️</span>
+        <span class="card-header-title">專案程式碼</span>
+        <span class="badge badge-count" id="file-total-badge">0</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="btn-refresh-files">🔄</button>
+    </div>
+    <div class="file-browser-layout">
+      <div class="file-tree-panel" id="file-tree-panel">
+        <ul class="file-tree" id="file-tree">
+          <li class="empty-state" style="padding: 30px 16px;"><span class="message">設定工作目錄後即可瀏覽程式碼</span></li>
+        </ul>
+      </div>
+      <div class="file-content-panel" id="file-content-panel">
+        <div class="file-content-header" id="file-content-header">
+          <span>點擊左側檔案以查看內容</span>
+        </div>
+        <pre class="file-content-code" id="file-content-code"></pre>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>
 
@@ -260,6 +286,77 @@
       </div>
       <div class="modal-actions">
         <button class="btn btn-primary" id="btn-close-diff">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Modal -->
+  <div class="modal-overlay" id="modal-faq">
+    <div class="modal modal-lg">
+      <div class="modal-title">💬 常見問題 (FAQ)</div>
+      <div class="help-content">
+
+        <div class="help-section">
+          <h3>❓ Commit 失敗了，是什麼原因？</h3>
+          <p>如果看到「工作區很乾淨」就表示沒有任何變更需要提交。你需要先修改檔案，然後 Stage 暫存，再 Commit。如果有變更但還是失敗，可能是忘記 Stage（暫存）了。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>❓ Stage All 跟 Unstage 是什麼意思？</h3>
+          <p>想像打包行李箱 ✈️：</p>
+          <ul>
+            <li><strong>Stage</strong> = 把衣服放進行李箱（標記「我要提交這些檔案」）</li>
+            <li><strong>Unstage</strong> = 從行李箱拿出來（「先不提交」）</li>
+            <li><strong>Commit</strong> = 把行李箱鎖上寄出（正式記錄變更）</li>
+          </ul>
+          <p>可以只 Stage 部分檔案，分次提交不同的變更。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>❓ 開發中應該持續建立分支嗎？</h3>
+          <p><strong>不需要！</strong>平常開發直接在 master 上 commit 就好。只有想實驗新功能、不確定會不會成功的時候才建分支。</p>
+          <ul>
+            <li>實驗成功 → 合併回主線</li>
+            <li>實驗失敗 → 切回主線，刪掉實驗分支</li>
+            <li>在 master 上改壞 → 用「⏪ 回到此版」回到之前的版本</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>❓ 可以回到特定分支階段嗎？</h3>
+          <p>可以！在 Commit 歷史中：</p>
+          <ul>
+            <li>「🔍 查看」— 先看程式碼變更，確認是哪個版本</li>
+            <li>「⏪ 回到此版」— 直接回到那個版本（後續變更會丟失）</li>
+            <li>「⤴️ 建立分支」— 從那個版本建立新分支，保留原本歷史</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>❓ 這個平台支援多人開發嗎？</h3>
+          <p>這是<strong>本機單人</strong>的版控工具。多人協作時，每人各自用自己的本機工具，透過 Push/Pull 和遠端同步。</p>
+          <p>推送到遠端的是你本機的 commit 歷史，和別人的可能不同。建議推送前先 Pull 同步。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>❓ 如何推送到 GitHub / GitLab / Gitee？</h3>
+          <ol>
+            <li>在平台上建立新的 Repository</li>
+            <li>在本工具的「Remote 管理」點「+ 新增」，填入名稱和 URL</li>
+            <li>選擇 Remote 和分支，點「Push 推送」</li>
+          </ol>
+          <p>首次推送可能需要設定 SSH Key 或 Personal Access Token 驗證身份。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>❓ 可以打包成桌面應用嗎？</h3>
+          <p>可以！用 <strong>Electron</strong> 就能將這個工具打包成 <code>.app</code>（Mac）或
+            <code>.exe</code>（Windows），雙擊就能用，不需要終端機。但不適合部署到雲端（如 Zeabur），因為需要存取本機檔案。</p>
+        </div>
+
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-close-faq">知道了！</button>
       </div>
     </div>
   </div>

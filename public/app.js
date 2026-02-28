@@ -74,6 +74,16 @@ const dom = {
     btnCloseDiff: $('#btn-close-diff'),
     // Pull
     btnPull: $('#btn-pull'),
+    // File browser
+    fileTree: $('#file-tree'),
+    fileTotalBadge: $('#file-total-badge'),
+    fileContentHeader: $('#file-content-header'),
+    fileContentCode: $('#file-content-code'),
+    btnRefreshFiles: $('#btn-refresh-files'),
+    // FAQ
+    btnFaq: $('#btn-faq'),
+    modalFaq: $('#modal-faq'),
+    btnCloseFaq: $('#btn-close-faq'),
 };
 
 // ─── Browse State ───────────────────────────────────────
@@ -347,7 +357,7 @@ async function fetchBranches() {
 }
 
 async function refreshAll() {
-    await Promise.all([fetchStatus(), fetchRemotes(), fetchLog(), fetchBranches()]);
+    await Promise.all([fetchStatus(), fetchRemotes(), fetchLog(), fetchBranches(), fetchFiles()]);
 }
 
 // ─── Actions ────────────────────────────────────────────
@@ -656,6 +666,71 @@ async function pull() {
     hideLoading();
 }
 
+// ─── File Browser ───────────────────────────────────────
+async function fetchFiles() {
+    try {
+        const data = await apiGet('/api/files');
+        if (data.success) {
+            dom.fileTotalBadge.textContent = data.total;
+            renderFileTree(data.files);
+        }
+    } catch (err) {
+        console.error('fetchFiles error:', err);
+    }
+}
+
+function renderFileTree(files) {
+    if (!files || files.length === 0) {
+        dom.fileTree.innerHTML = `<li class="empty-state" style="padding: 30px 16px;"><span class="message">無檔案</span></li>`;
+        return;
+    }
+
+    let html = '';
+    files.forEach(item => {
+        if (item.type === 'folder') {
+            html += `<li class="file-tree-item folder"><span class="tree-icon">📁</span>${escapeHtml(item.name)}</li>`;
+            if (item.children) {
+                item.children.forEach(child => {
+                    html += `<li class="file-tree-item indent-1" data-file-path="${escapeHtml(child.path)}"><span class="tree-icon">📄</span>${escapeHtml(child.name)}</li>`;
+                });
+            }
+        } else {
+            html += `<li class="file-tree-item" data-file-path="${escapeHtml(item.path)}"><span class="tree-icon">📄</span>${escapeHtml(item.name)}</li>`;
+        }
+    });
+    dom.fileTree.innerHTML = html;
+
+    // Bind click events
+    dom.fileTree.querySelectorAll('[data-file-path]').forEach(item => {
+        item.addEventListener('click', () => {
+            dom.fileTree.querySelectorAll('.file-tree-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            viewFileContent(item.dataset.filePath);
+        });
+    });
+}
+
+async function viewFileContent(filePath) {
+    dom.fileContentHeader.innerHTML = `<span>📄 ${escapeHtml(filePath)}</span>`;
+    dom.fileContentCode.textContent = '載入中...';
+
+    try {
+        const data = await apiGet(`/api/file-content?file=${encodeURIComponent(filePath)}`);
+        if (data.success) {
+            const lines = data.content.split('\n');
+            const numbered = lines.map((line, i) => {
+                const num = String(i + 1).padStart(4, ' ');
+                return `<span style="color:rgba(148,163,184,0.4);user-select:none;">${num}</span>  ${escapeHtml(line)}`;
+            }).join('\n');
+            dom.fileContentCode.innerHTML = numbered;
+            dom.fileContentHeader.innerHTML = `<span>📄 ${escapeHtml(filePath)}</span> <span style="color:var(--text-muted); margin-left: 12px;">${data.language} · ${lines.length} 行</span>`;
+        } else {
+            dom.fileContentCode.textContent = data.message || '無法載入';
+        }
+    } catch (err) {
+        dom.fileContentCode.textContent = '載入失敗：' + err.message;
+    }
+}
 // ─── Utility ────────────────────────────────────────────
 function escapeHtml(str) {
     const div = document.createElement('div');
@@ -729,6 +804,7 @@ dom.btnCommit.addEventListener('click', commit);
 dom.btnPush.addEventListener('click', push);
 dom.btnPushAll.addEventListener('click', pushAll);
 dom.btnPull.addEventListener('click', pull);
+dom.btnRefreshFiles.addEventListener('click', fetchFiles);
 
 // Folder Browser
 dom.btnBrowseFolder.addEventListener('click', () => {
@@ -804,6 +880,19 @@ dom.btnCloseDiff.addEventListener('click', () => {
 dom.modalDiff.addEventListener('click', (e) => {
     if (e.target === dom.modalDiff) {
         dom.modalDiff.classList.remove('active');
+    }
+});
+
+// FAQ modal
+dom.btnFaq.addEventListener('click', () => {
+    dom.modalFaq.classList.add('active');
+});
+dom.btnCloseFaq.addEventListener('click', () => {
+    dom.modalFaq.classList.remove('active');
+});
+dom.modalFaq.addEventListener('click', (e) => {
+    if (e.target === dom.modalFaq) {
+        dom.modalFaq.classList.remove('active');
     }
 });
 
