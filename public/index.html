@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="版本控制上傳平台 - 一鍵推送到 GitHub、GitLab、Gitee 等版控平台">
-  <title>Stanford Version Control | 版本控制上傳平台</title>
+  <title>史丹專屬版控平台</title>
   <link rel="stylesheet" href="style.css">
   <link rel="icon"
     href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
@@ -167,6 +167,9 @@
               <button class="btn btn-info w-full" id="btn-push-all">
                 📡 推送到所有 Remote
               </button>
+              <button class="btn btn-ghost w-full" id="btn-pull">
+                ⬇️ Pull 同步遠端變更
+              </button>
             </div>
           </div>
         </div>
@@ -247,6 +250,20 @@
     </div>
   </div>
 
+  <!-- Diff Viewer Modal -->
+  <div class="modal-overlay" id="modal-diff">
+    <div class="modal modal-xl">
+      <div class="modal-title">🔍 Commit 變更詳情</div>
+      <div class="diff-header" id="diff-header"></div>
+      <div class="diff-viewer" id="diff-viewer">
+        <pre class="diff-content" id="diff-content">載入中...</pre>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-close-diff">關閉</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Help Guide Modal -->
   <div class="modal-overlay" id="modal-help">
     <div class="modal modal-lg">
@@ -264,20 +281,61 @@
         </div>
 
         <div class="help-section">
+          <h3>📦 Stage 與 Unstage 是什麼？</h3>
+          <p>想像你在打包行李箱準備出國 ✈️：</p>
+          <ul>
+            <li><strong>修改的檔案</strong> = 散落在房間的衣服（你改了但還沒決定要不要提交）</li>
+            <li><strong>Stage (暫存)</strong> = 把衣服放進行李箱（標記「這些檔案我要提交」）</li>
+            <li><strong>Unstage</strong> = 把衣服從行李箱拿出來（「這個先不提交」）</li>
+            <li><strong>Commit</strong> = 把行李箱鎖上寄出（正式記錄這次變更）</li>
+          </ul>
+          <p>💡 <strong>實用場景</strong>：假設你改了 10 個檔案，但只想先提交 3 個，就可以只 Stage 那 3 個再 Commit，剩下的之後再處理。</p>
+        </div>
+
+        <div class="help-section">
+          <h3>🌿 分支策略建議</h3>
+          <p>平常開發不需要建分支，直接在主線上 commit 就好：</p>
+          <p
+            style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--accent-cyan); background: var(--bg-input); padding: 10px; border-radius: 8px; margin: 8px 0;">
+            master ── commit 1 ── commit 2 ── commit 3 ── ...
+          </p>
+          <p><strong>什麼時候才需要分支？</strong></p>
+          <ul>
+            <li>想試驗新功能，不確定會不會成功 → <strong>建立分支</strong>實驗</li>
+            <li>實驗失敗 → 切回主線，刪掉實驗分支</li>
+            <li>實驗成功 → 合併回主線</li>
+            <li>改壞了想完全回到之前 → 用「回到此版」</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>⏪ 回到特定版本</h3>
+          <p>在「Commit 歷史」中，每個 commit 右側有三個按鈕：</p>
+          <ul>
+            <li><strong>「🔍 查看」</strong> — 查看該 commit 的程式碼變更內容（diff）</li>
+            <li><strong>「⏪ 回到此版」</strong> — 將工作目錄重置到該 commit（警告：後續變更會丟失）</li>
+            <li><strong>「⤴️ 建立分支」</strong> — 從該 commit 建立新分支，保留原本歷史</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>👥 關於多人協作</h3>
+          <p>這個工具是<strong>本機單人使用</strong>的版控工具。多人協作時：</p>
+          <ul>
+            <li>每人在自己的電腦上有各自的本機副本</li>
+            <li>透過 <strong>Push</strong> 把自己的變更推送到遠端（GitHub 等）</li>
+            <li>透過 <strong>Pull</strong> 把別人的變更同步到本機</li>
+            <li>如果兩人改了同一個檔案，可能會產生<strong>衝突 (conflict)</strong>，需要手動解決</li>
+          </ul>
+          <p>💡 建議：推送前先 <strong>Pull</strong> 同步一下，確保本機是最新狀態再 Push。</p>
+        </div>
+
+        <div class="help-section">
           <h3>⌨️ 鍵盤快捷鍵</h3>
           <div class="help-shortcuts">
             <div class="help-shortcut"><kbd>Enter</kbd> <span>設定工作目錄 / 確認 Remote</span></div>
             <div class="help-shortcut"><kbd>Ctrl/⌘ + Enter</kbd> <span>快速 Commit</span></div>
           </div>
-        </div>
-
-        <div class="help-section">
-          <h3>⏪ 回到特定版本</h3>
-          <p>在「Commit 歷史」中，每個 commit 右側有兩個按鈕：</p>
-          <ul>
-            <li><strong>「回到此版」</strong> — 將工作目錄重置到該 commit（警告：會丟失後續變更）</li>
-            <li><strong>「建立分支」</strong> — 從該 commit 建立新分支，保留原本的歷史</li>
-          </ul>
         </div>
 
         <div class="help-section">
@@ -311,7 +369,7 @@
               <div class="help-step-num">3</div>
               <div>
                 <strong>推送</strong>
-                <p>在「Push 推送」區選擇 Remote 和分支，點擊「Push 推送」。或點「推送到所有 Remote」一次同步！</p>
+                <p>選擇 Remote 和分支，點擊「Push 推送」。或點「推送到所有 Remote」一次同步！</p>
               </div>
             </div>
           </div>

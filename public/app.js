@@ -67,6 +67,13 @@ const dom = {
     btnHelp: $('#btn-help'),
     modalHelp: $('#modal-help'),
     btnCloseHelp: $('#btn-close-help'),
+    // Diff viewer
+    modalDiff: $('#modal-diff'),
+    diffHeader: $('#diff-header'),
+    diffContent: $('#diff-content'),
+    btnCloseDiff: $('#btn-close-diff'),
+    // Pull
+    btnPull: $('#btn-pull'),
 };
 
 // ─── Browse State ───────────────────────────────────────
@@ -207,13 +214,17 @@ function renderCommitList() {
         </div>
       </div>
       <div class="commit-actions">
+        <button class="btn btn-ghost btn-sm" data-view-hash="${c.hash}" title="查看變更內容">🔍 查看</button>
         <button class="btn btn-warning btn-sm" data-checkout-hash="${c.hash}" title="回到此版本">⏪ 回到此版</button>
         <button class="btn btn-ghost btn-sm" data-branch-hash="${c.hash}" title="從此 commit 建立新分支">⤴️ 建立分支</button>
       </div>
     </li>
   `).join('');
 
-    // Bind checkout & branch buttons
+    // Bind view, checkout & branch buttons
+    dom.commitList.querySelectorAll('[data-view-hash]').forEach(btn => {
+        btn.addEventListener('click', () => viewCommitDiff(btn.dataset.viewHash));
+    });
     dom.commitList.querySelectorAll('[data-checkout-hash]').forEach(btn => {
         btn.addEventListener('click', () => checkoutCommit(btn.dataset.checkoutHash, false));
     });
@@ -584,6 +595,67 @@ async function checkoutCommit(hash, createBranch) {
     hideLoading();
 }
 
+// View commit diff
+async function viewCommitDiff(hash) {
+    dom.modalDiff.classList.add('active');
+    dom.diffHeader.textContent = '載入中...';
+    dom.diffContent.innerHTML = '載入中...';
+
+    try {
+        const data = await apiGet(`/api/show?hash=${encodeURIComponent(hash)}`);
+        if (data.success) {
+            // Parse info header
+            const infoLines = data.info.split('\n');
+            const firstLine = infoLines[0] || '';
+            const parts = firstLine.split('|');
+            const shortHash = parts[1] || hash.substring(0, 7);
+            const author = parts[2] || '';
+            const date = parts[4] || '';
+            const message = parts.slice(5).join('|') || '';
+            dom.diffHeader.innerHTML = `
+        <strong>${escapeHtml(message)}</strong><br>
+        <span>👤 ${escapeHtml(author)} · 🕐 ${date} · #${shortHash}</span>
+      `;
+
+            // Render diff with syntax highlighting
+            const diffLines = data.diff.split('\n');
+            dom.diffContent.innerHTML = diffLines.map(line => {
+                const escaped = escapeHtml(line);
+                if (line.startsWith('+')) {
+                    return `<span class="diff-line-add">${escaped}</span>`;
+                } else if (line.startsWith('-')) {
+                    return `<span class="diff-line-del">${escaped}</span>`;
+                } else if (line.startsWith('@@')) {
+                    return `<span class="diff-line-info">${escaped}</span>`;
+                } else {
+                    return escaped + '\n';
+                }
+            }).join('');
+        } else {
+            dom.diffContent.textContent = data.message || '無法載入';
+        }
+    } catch (err) {
+        dom.diffContent.textContent = '載入失敗：' + err.message;
+    }
+}
+
+// Pull
+async function pull() {
+    showLoading('拉取遠端變更...');
+    try {
+        const data = await apiPost('/api/pull');
+        if (data.success) {
+            showToast(data.message || '成功拉取遠端變更！', 'success');
+            await refreshAll();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('Pull 失敗：' + err.message, 'error');
+    }
+    hideLoading();
+}
+
 // ─── Utility ────────────────────────────────────────────
 function escapeHtml(str) {
     const div = document.createElement('div');
@@ -656,6 +728,7 @@ dom.btnRefreshLog.addEventListener('click', () => fetchLog());
 dom.btnCommit.addEventListener('click', commit);
 dom.btnPush.addEventListener('click', push);
 dom.btnPushAll.addEventListener('click', pushAll);
+dom.btnPull.addEventListener('click', pull);
 
 // Folder Browser
 dom.btnBrowseFolder.addEventListener('click', () => {
@@ -721,6 +794,16 @@ dom.btnCloseHelp.addEventListener('click', () => {
 dom.modalHelp.addEventListener('click', (e) => {
     if (e.target === dom.modalHelp) {
         dom.modalHelp.classList.remove('active');
+    }
+});
+
+// Diff modal
+dom.btnCloseDiff.addEventListener('click', () => {
+    dom.modalDiff.classList.remove('active');
+});
+dom.modalDiff.addEventListener('click', (e) => {
+    if (e.target === dom.modalDiff) {
+        dom.modalDiff.classList.remove('active');
     }
 });
 

@@ -364,6 +364,54 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
+// ─── API: Git pull ────────────────────────────────────────────────
+app.post('/api/pull', async (req, res) => {
+    try {
+        const { remote, branch } = req.body;
+        const args = ['pull'];
+        if (remote) args.push(remote);
+        if (branch) args.push(branch);
+        const output = await gitExec(args, currentWorkDir);
+        res.json({ success: true, message: output || '已同步最新版本' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// ─── API: Git revert (safe undo) ──────────────────────────────────
+app.post('/api/revert', async (req, res) => {
+    try {
+        const { hash } = req.body;
+        if (!hash) {
+            return res.status(400).json({ success: false, message: '請提供 commit hash' });
+        }
+        const output = await gitExec(['revert', '--no-edit', hash], currentWorkDir);
+        res.json({ success: true, message: output || `已安全回退 commit: ${hash.substring(0, 7)}` });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+// ─── API: Git show (commit details) ───────────────────────────────
+app.get('/api/show', async (req, res) => {
+    try {
+        const { hash } = req.query;
+        if (!hash) {
+            return res.status(400).json({ success: false, message: '請提供 commit hash' });
+        }
+        // Get commit info
+        const info = await gitExec(
+            ['show', '--stat', '--format=%H|%h|%an|%ae|%ar|%s', hash],
+            currentWorkDir
+        );
+        // Get the diff
+        const diff = await gitExec(['show', '--format=', hash], currentWorkDir);
+        res.json({ success: true, info, diff });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 // ─── Fallback: serve index.html ───────────────────────────────────
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

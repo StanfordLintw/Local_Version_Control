@@ -1274,6 +1274,66 @@ textarea.input {
     opacity: 1;
 }
 
+/* ─── Diff Viewer ────────────────────────────────────── */
+.modal-xl {
+    max-width: 850px;
+}
+
+.diff-header {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.6;
+}
+
+.diff-viewer {
+    max-height: 50vh;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: #0d1117;
+}
+
+.diff-content {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    padding: 16px;
+    margin: 0;
+    color: #e6edf3;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.diff-line-add {
+    color: #3fb950;
+    background: rgba(46, 160, 67, 0.12);
+    display: block;
+    margin: 0 -16px;
+    padding: 0 16px;
+}
+
+.diff-line-del {
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.12);
+    display: block;
+    margin: 0 -16px;
+    padding: 0 16px;
+}
+
+.diff-line-info {
+    color: #79c0ff;
+    display: block;
+    margin: 0 -16px;
+    padding: 0 16px;
+    background: rgba(56, 139, 253, 0.08);
+}
+
 /* ─── Responsive ─────────────────────────────────────── */
 @media (max-width: 1024px) {
     .grid-main {
