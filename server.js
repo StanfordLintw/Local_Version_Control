@@ -341,6 +341,29 @@ app.get('/api/browse', (req, res) => {
     }
 });
 
+// ─── API: Git checkout (restore to specific commit) ───────────────
+app.post('/api/checkout', async (req, res) => {
+    try {
+        const { hash, createBranch } = req.body;
+        if (!hash) {
+            return res.status(400).json({ success: false, message: '請提供 commit hash' });
+        }
+
+        if (createBranch) {
+            // Create a new branch at the specified commit
+            const branchName = `restore-${hash.substring(0, 7)}`;
+            await gitExec(['checkout', '-b', branchName, hash], currentWorkDir);
+            res.json({ success: true, message: `已建立並切換到分支: ${branchName}` });
+        } else {
+            // Hard reset to the commit
+            await gitExec(['reset', '--hard', hash], currentWorkDir);
+            res.json({ success: true, message: `已回到 commit: ${hash.substring(0, 7)}` });
+        }
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 // ─── Fallback: serve index.html ───────────────────────────────────
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

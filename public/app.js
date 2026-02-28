@@ -63,6 +63,10 @@ const dom = {
     btnBrowseHome: $('#btn-browse-home'),
     btnBrowseCancel: $('#btn-browse-cancel'),
     btnBrowseSelect: $('#btn-browse-select'),
+    // Help
+    btnHelp: $('#btn-help'),
+    modalHelp: $('#modal-help'),
+    btnCloseHelp: $('#btn-close-help'),
 };
 
 // ─── Browse State ───────────────────────────────────────
@@ -202,8 +206,20 @@ function renderCommitList() {
           <span>🕐 ${c.date}</span>
         </div>
       </div>
+      <div class="commit-actions">
+        <button class="btn btn-warning btn-sm" data-checkout-hash="${c.hash}" title="回到此版本">⏪ 回到此版</button>
+        <button class="btn btn-ghost btn-sm" data-branch-hash="${c.hash}" title="從此 commit 建立新分支">⤴️ 建立分支</button>
+      </div>
     </li>
   `).join('');
+
+    // Bind checkout & branch buttons
+    dom.commitList.querySelectorAll('[data-checkout-hash]').forEach(btn => {
+        btn.addEventListener('click', () => checkoutCommit(btn.dataset.checkoutHash, false));
+    });
+    dom.commitList.querySelectorAll('[data-branch-hash]').forEach(btn => {
+        btn.addEventListener('click', () => checkoutCommit(btn.dataset.branchHash, true));
+    });
 }
 
 // ─── Render: Remote List ────────────────────────────────
@@ -546,6 +562,28 @@ function selectAllFiles() {
     renderFileList();
 }
 
+// Checkout commit
+async function checkoutCommit(hash, createBranch) {
+    const action = createBranch
+        ? `從 commit ${hash.substring(0, 7)} 建立新分支`
+        : `回到 commit ${hash.substring(0, 7)}（警告：後續的變更將會丟失）`;
+    if (!confirm(`確定要${action}嗎？`)) return;
+
+    showLoading(createBranch ? '建立分支中...' : '回到指定版本...');
+    try {
+        const data = await apiPost('/api/checkout', { hash, createBranch });
+        if (data.success) {
+            showToast(data.message, 'success');
+            await refreshAll();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('Checkout 失敗：' + err.message, 'error');
+    }
+    hideLoading();
+}
+
 // ─── Utility ────────────────────────────────────────────
 function escapeHtml(str) {
     const div = document.createElement('div');
@@ -671,6 +709,19 @@ dom.remoteUrlInput.addEventListener('keydown', (e) => {
 // Keyboard shortcut: Ctrl+Enter in commit message to commit
 dom.commitMessage.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') commit();
+});
+
+// Help modal
+dom.btnHelp.addEventListener('click', () => {
+    dom.modalHelp.classList.add('active');
+});
+dom.btnCloseHelp.addEventListener('click', () => {
+    dom.modalHelp.classList.remove('active');
+});
+dom.modalHelp.addEventListener('click', (e) => {
+    if (e.target === dom.modalHelp) {
+        dom.modalHelp.classList.remove('active');
+    }
 });
 
 // ─── Auto-refresh ───────────────────────────────────────

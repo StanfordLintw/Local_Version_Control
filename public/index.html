@@ -25,6 +25,7 @@
         </div>
       </div>
       <div class="flex items-center gap-md">
+        <button class="btn btn-ghost btn-sm" id="btn-help" title="使用說明">❓ 說明</button>
         <span class="branch-badge" id="branch-badge">
           <span>⎇</span>
           <span id="current-branch">—</span>
@@ -148,19 +149,17 @@
           </div>
           <div class="card-body">
             <div class="push-controls">
-              <div class="push-row">
-                <div class="input-group">
-                  <label class="input-label" for="push-remote">Remote</label>
-                  <select class="input" id="push-remote">
-                    <option value="">選擇 remote...</option>
-                  </select>
-                </div>
-                <div class="input-group">
-                  <label class="input-label" for="push-branch">分支</label>
-                  <select class="input" id="push-branch">
-                    <option value="">選擇分支...</option>
-                  </select>
-                </div>
+              <div class="input-group">
+                <label class="input-label" for="push-remote">Remote</label>
+                <select class="input" id="push-remote">
+                  <option value="">選擇 remote...</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label class="input-label" for="push-branch">分支</label>
+                <select class="input" id="push-branch">
+                  <option value="">選擇分支...</option>
+                </select>
               </div>
               <button class="btn btn-success w-full btn-lg" id="btn-push">
                 🚀 Push 推送
@@ -244,6 +243,87 @@
       <div class="modal-actions">
         <button class="btn btn-ghost" id="btn-browse-cancel">取消</button>
         <button class="btn btn-primary" id="btn-browse-select">✅ 選擇此資料夾</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Guide Modal -->
+  <div class="modal-overlay" id="modal-help">
+    <div class="modal modal-lg">
+      <div class="modal-title">📖 使用說明</div>
+      <div class="help-content">
+
+        <div class="help-section">
+          <h3>🚀 快速開始</h3>
+          <ol>
+            <li><strong>設定工作目錄</strong> — 輸入或瀏覽你的 Git 專案資料夾</li>
+            <li><strong>Stage 檔案</strong> — 點擊「Stage All」或勾選特定檔案</li>
+            <li><strong>Commit</strong> — 輸入變更說明，點擊「Commit」</li>
+            <li><strong>Push</strong> — 選擇 Remote 和分支，點擊「Push 推送」</li>
+          </ol>
+        </div>
+
+        <div class="help-section">
+          <h3>⌨️ 鍵盤快捷鍵</h3>
+          <div class="help-shortcuts">
+            <div class="help-shortcut"><kbd>Enter</kbd> <span>設定工作目錄 / 確認 Remote</span></div>
+            <div class="help-shortcut"><kbd>Ctrl/⌘ + Enter</kbd> <span>快速 Commit</span></div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>⏪ 回到特定版本</h3>
+          <p>在「Commit 歷史」中，每個 commit 右側有兩個按鈕：</p>
+          <ul>
+            <li><strong>「回到此版」</strong> — 將工作目錄重置到該 commit（警告：會丟失後續變更）</li>
+            <li><strong>「建立分支」</strong> — 從該 commit 建立新分支，保留原本的歷史</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <h3>🔗 如何推送到 GitHub / GitLab / Gitee</h3>
+          <div class="help-platform-guide">
+            <div class="help-step">
+              <div class="help-step-num">1</div>
+              <div>
+                <strong>建立遠端 Repo</strong>
+                <p>前往平台建立一個新的 Repository：</p>
+                <ul class="help-links">
+                  <li><a href="https://github.com/new" target="_blank">GitHub → github.com/new</a></li>
+                  <li><a href="https://gitlab.com/projects/new" target="_blank">GitLab → gitlab.com/projects/new</a>
+                  </li>
+                  <li><a href="https://gitee.com/projects/new" target="_blank">Gitee → gitee.com/projects/new</a></li>
+                </ul>
+              </div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">2</div>
+              <div>
+                <strong>新增 Remote</strong>
+                <p>在本平台的「Remote 管理」區塊，點擊「+ 新增」：</p>
+                <ul>
+                  <li>名稱：<code>github</code>、<code>gitlab</code>、<code>gitee</code></li>
+                  <li>URL：從平台複製的 repo URL（例如 <code>https://github.com/user/repo.git</code>）</li>
+                </ul>
+              </div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">3</div>
+              <div>
+                <strong>推送</strong>
+                <p>在「Push 推送」區選擇 Remote 和分支，點擊「Push 推送」。或點「推送到所有 Remote」一次同步！</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="help-section help-note">
+          <p>⚠️ <strong>首次推送時</strong>，平台可能會要求驗證身份。請確保已設定 SSH Key 或 Personal Access Token。</p>
+        </div>
+
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="btn-close-help">知道了！</button>
       </div>
     </div>
   </div>
