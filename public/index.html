@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="版本控制上傳平台 - 一鍵推送到 GitHub、GitLab、Gitee 等版控平台">
+  <title>Stanford Version Control | 版本控制上傳平台</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+
+<body>
+
+  <div id="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-logo">
+        <div class="header-logo-icon">🚀</div>
+        <div>
+          <div class="header-title">Version Control</div>
+          <div class="header-subtitle">一鍵推送到 GitHub · GitLab · Gitee</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-md">
+        <span class="branch-badge" id="branch-badge">
+          <span>⎇</span>
+          <span id="current-branch">—</span>
+        </span>
+        <span class="status-dot disconnected" id="status-dot" title="未連線"></span>
+      </div>
+    </header>
+
+    <!-- Workdir Bar -->
+    <div class="workdir-bar">
+      <span class="icon">📂</span>
+      <input type="text" class="workdir-input" id="workdir-input"
+        placeholder="輸入本地 Git 專案路徑，例如：/Users/you/my-project" />
+      <button class="btn btn-info btn-sm" id="btn-browse-folder" title="瀏覽資料夾">📁 瀏覽</button>
+      <button class="btn btn-primary btn-sm" id="btn-set-workdir">設定目錄</button>
+      <button class="btn btn-ghost btn-sm" id="btn-init-repo" title="初始化 Git">Init</button>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row" id="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">修改檔案</div>
+        <div class="stat-value" id="stat-modified">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">新增檔案</div>
+        <div class="stat-value success" id="stat-added">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">已暫存</div>
+        <div class="stat-value warning" id="stat-staged">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Remote 數量</div>
+        <div class="stat-value" id="stat-remotes">0</div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-main mb-md">
+
+      <!-- Left Column: File Status + Commit History -->
+      <div class="flex flex-col gap-md">
+
+        <!-- File Status Card -->
+        <div class="card" id="file-status-card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="card-header-icon">📄</span>
+              <span class="card-header-title">檔案變更</span>
+              <span class="badge badge-count" id="file-count-badge">0</span>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-ghost btn-sm" id="btn-select-all">全選</button>
+              <button class="btn btn-success btn-sm" id="btn-stage-all">⊕ Stage All</button>
+              <button class="btn btn-ghost btn-sm" id="btn-unstage-all">Unstage</button>
+              <button class="btn btn-ghost btn-sm" id="btn-refresh">🔄</button>
+            </div>
+          </div>
+          <div class="card-body no-pad">
+            <ul class="file-list" id="file-list">
+              <li class="empty-state">
+                <span class="icon">📭</span>
+                <span class="message">尚未載入檔案。請先設定工作目錄。</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Commit History Card -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="card-header-icon">📜</span>
+              <span class="card-header-title">Commit 歷史</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-refresh-log">🔄</button>
+          </div>
+          <div class="card-body no-pad">
+            <ul class="commit-list" id="commit-list">
+              <li class="empty-state">
+                <span class="icon">📭</span>
+                <span class="message">尚無 Commit 紀錄</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Actions + Remotes -->
+      <div class="flex flex-col gap-md">
+
+        <!-- Commit Section -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="card-header-icon">💬</span>
+              <span class="card-header-title">Commit</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="action-panel">
+              <div class="input-group">
+                <label class="input-label" for="commit-message">Commit Message</label>
+                <textarea class="input" id="commit-message" placeholder="描述你的變更..."></textarea>
+              </div>
+              <button class="btn btn-primary w-full" id="btn-commit">
+                💬 Commit
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Push Section -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="card-header-icon">🚀</span>
+              <span class="card-header-title">Push 推送</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="push-controls">
+              <div class="push-row">
+                <div class="input-group">
+                  <label class="input-label" for="push-remote">Remote</label>
+                  <select class="input" id="push-remote">
+                    <option value="">選擇 remote...</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label class="input-label" for="push-branch">分支</label>
+                  <select class="input" id="push-branch">
+                    <option value="">選擇分支...</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-success w-full btn-lg" id="btn-push">
+                🚀 Push 推送
+              </button>
+              <button class="btn btn-info w-full" id="btn-push-all">
+                📡 推送到所有 Remote
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remote Management -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="card-header-icon">🔗</span>
+              <span class="card-header-title">Remote 管理</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-add-remote-modal">+ 新增</button>
+          </div>
+          <div class="card-body no-pad">
+            <ul class="remote-list" id="remote-list">
+              <li class="empty-state">
+                <span class="icon">🔗</span>
+                <span class="message">尚無設定 Remote</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loading-text">處理中...</div>
+    </div>
+  </div>
+
+  <!-- Add Remote Modal -->
+  <div class="modal-overlay" id="modal-add-remote">
+    <div class="modal">
+      <div class="modal-title">🔗 新增 Remote</div>
+      <div class="flex flex-col gap-md">
+        <div class="input-group">
+          <label class="input-label" for="remote-name-input">名稱</label>
+          <input type="text" class="input" id="remote-name-input" placeholder="例如：github, gitlab, gitee">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="remote-url-input">URL</label>
+          <input type="text" class="input input-mono" id="remote-url-input"
+            placeholder="https://github.com/user/repo.git">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btn-cancel-remote">取消</button>
+        <button class="btn btn-primary" id="btn-confirm-remote">新增</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Folder Browser Modal -->
+  <div class="modal-overlay" id="modal-browse-folder">
+    <div class="modal modal-lg">
+      <div class="modal-title">📁 選擇專案資料夾</div>
+      <div class="browse-current-path" id="browse-current-path">/</div>
+      <div class="browse-toolbar">
+        <button class="btn btn-ghost btn-sm" id="btn-browse-up">⬆️ 上一層</button>
+        <button class="btn btn-ghost btn-sm" id="btn-browse-home">🏠 Home</button>
+      </div>
+      <div class="browse-list-container">
+        <ul class="browse-list" id="browse-list">
+          <li class="empty-state"><span class="message">載入中...</span></li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btn-browse-cancel">取消</button>
+        <button class="btn btn-primary" id="btn-browse-select">✅ 選擇此資料夾</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
