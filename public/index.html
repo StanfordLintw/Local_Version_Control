@@ -43,6 +43,7 @@
       <button class="btn btn-info btn-sm" id="btn-browse-folder" title="瀏覽資料夾">📁 瀏覽</button>
       <button class="btn btn-primary btn-sm" id="btn-set-workdir">設定目錄</button>
       <button class="btn btn-ghost btn-sm" id="btn-init-repo" title="初始化 Git">Init</button>
+      <button class="btn btn-success btn-sm" id="btn-clone-modal" title="克隆遠端專案">⬇️ Clone</button>
     </div>
 
     <!-- Stats Row -->
@@ -255,6 +256,29 @@
     </div>
   </div>
 
+  <!-- Clone Modal -->
+  <div class="modal-overlay" id="modal-clone">
+    <div class="modal">
+      <div class="modal-title">⬇️ Clone 克隆遠端專案</div>
+      <div class="flex flex-col gap-md">
+        <div class="input-group">
+          <label class="input-label" for="clone-url-input">Git Repo URL</label>
+          <input type="text" class="input input-mono" id="clone-url-input"
+            placeholder="https://github.com/user/repo.git">
+        </div>
+        <div class="input-group">
+          <label class="input-label" for="clone-dir-input">目標資料夾路徑</label>
+          <input type="text" class="input input-mono" id="clone-dir-input" placeholder="/Users/you/projects/my-repo">
+        </div>
+        <p class="text-sm text-muted">專案會被克隆到指定的資料夾，並自動設定為工作目錄。</p>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btn-clone-cancel">取消</button>
+        <button class="btn btn-success" id="btn-clone-confirm">⬇️ 開始 Clone</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Folder Browser Modal -->
   <div class="modal-overlay" id="modal-browse-folder">
     <div class="modal modal-lg">
@@ -351,7 +375,8 @@
         <div class="help-section">
           <h3>❓ 可以打包成桌面應用嗎？</h3>
           <p>可以！用 <strong>Electron</strong> 就能將這個工具打包成 <code>.app</code>（Mac）或
-            <code>.exe</code>（Windows），雙擊就能用，不需要終端機。但不適合部署到雲端（如 Zeabur），因為需要存取本機檔案。</p>
+            <code>.exe</code>（Windows），雙擊就能用，不需要終端機。但不適合部署到雲端（如 Zeabur），因為需要存取本機檔案。
+          </p>
         </div>
 
       </div>

@@ -501,6 +501,43 @@ app.get('/api/file-content', (req, res) => {
     }
 });
 
+// ─── API: Git clone ───────────────────────────────────────────────
+app.post('/api/clone', async (req, res) => {
+    try {
+        const { url, targetDir } = req.body;
+        if (!url) {
+            return res.status(400).json({ success: false, message: '請提供 Git repo URL' });
+        }
+        if (!targetDir) {
+            return res.status(400).json({ success: false, message: '請提供目標資料夾路徑' });
+        }
+
+        const resolvedDir = path.resolve(targetDir);
+
+        // Check if target already exists
+        if (fs.existsSync(resolvedDir)) {
+            const entries = fs.readdirSync(resolvedDir);
+            if (entries.length > 0) {
+                return res.status(400).json({ success: false, message: '目標資料夾已存在且不為空' });
+            }
+        }
+
+        // Clone the repo
+        const output = await gitExec(['clone', url, resolvedDir], process.cwd());
+
+        // Auto-set as workdir
+        currentWorkDir = resolvedDir;
+
+        res.json({
+            success: true,
+            message: `Clone 成功！已設定工作目錄為: ${resolvedDir}`,
+            workdir: resolvedDir,
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
 // ─── Fallback: serve index.html ───────────────────────────────────
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));

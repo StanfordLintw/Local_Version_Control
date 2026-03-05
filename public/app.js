@@ -84,6 +84,13 @@ const dom = {
     btnFaq: $('#btn-faq'),
     modalFaq: $('#modal-faq'),
     btnCloseFaq: $('#btn-close-faq'),
+    // Clone
+    btnCloneModal: $('#btn-clone-modal'),
+    modalClone: $('#modal-clone'),
+    cloneUrlInput: $('#clone-url-input'),
+    cloneDirInput: $('#clone-dir-input'),
+    btnCloneCancel: $('#btn-clone-cancel'),
+    btnCloneConfirm: $('#btn-clone-confirm'),
 };
 
 // ─── Browse State ───────────────────────────────────────
@@ -738,6 +745,41 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+// Clone repo
+async function cloneRepo() {
+    const url = dom.cloneUrlInput.value.trim();
+    const targetDir = dom.cloneDirInput.value.trim();
+    if (!url) {
+        showToast('請輸入 Git Repo URL', 'warning');
+        return;
+    }
+    if (!targetDir) {
+        showToast('請輸入目標資料夾路徑', 'warning');
+        return;
+    }
+
+    showLoading('Clone 克隆中，請稍候...');
+    try {
+        const data = await apiPost('/api/clone', { url, targetDir });
+        if (data.success) {
+            showToast(data.message, 'success');
+            dom.modalClone.classList.remove('active');
+            dom.cloneUrlInput.value = '';
+            dom.cloneDirInput.value = '';
+            if (data.workdir) {
+                state.workdir = data.workdir;
+                dom.workdirInput.value = data.workdir;
+            }
+            await refreshAll();
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('Clone 失敗：' + err.message, 'error');
+    }
+    hideLoading();
+}
+
 // ─── Folder Browser ────────────────────────────────────
 async function browseTo(targetPath) {
     try {
@@ -805,6 +847,24 @@ dom.btnPush.addEventListener('click', push);
 dom.btnPushAll.addEventListener('click', pushAll);
 dom.btnPull.addEventListener('click', pull);
 dom.btnRefreshFiles.addEventListener('click', fetchFiles);
+
+// Clone modal
+dom.btnCloneModal.addEventListener('click', () => {
+    dom.modalClone.classList.add('active');
+    dom.cloneUrlInput.focus();
+});
+dom.btnCloneCancel.addEventListener('click', () => {
+    dom.modalClone.classList.remove('active');
+});
+dom.btnCloneConfirm.addEventListener('click', cloneRepo);
+dom.modalClone.addEventListener('click', (e) => {
+    if (e.target === dom.modalClone) {
+        dom.modalClone.classList.remove('active');
+    }
+});
+dom.cloneDirInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') cloneRepo();
+});
 
 // Folder Browser
 dom.btnBrowseFolder.addEventListener('click', () => {
