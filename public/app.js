@@ -738,6 +738,29 @@ async function viewFileContent(filePath) {
         dom.fileContentCode.textContent = '載入失敗：' + err.message;
     }
 }
+
+// ─── View Toggle ────────────────────────────────────────
+function switchLeftView(view) {
+    const viewChanges = $('#view-changes');
+    const viewCode = $('#view-code');
+    const tabChanges = $('#tab-changes');
+    const tabCode = $('#tab-code');
+
+    if (view === 'code') {
+        viewChanges.classList.add('hidden');
+        viewCode.classList.remove('hidden');
+        tabChanges.classList.remove('active');
+        tabCode.classList.add('active');
+        // Auto-fetch files when switching to code view
+        fetchFiles();
+    } else {
+        viewCode.classList.add('hidden');
+        viewChanges.classList.remove('hidden');
+        tabCode.classList.remove('active');
+        tabChanges.classList.add('active');
+    }
+}
+
 // ─── Utility ────────────────────────────────────────────
 function escapeHtml(str) {
     const div = document.createElement('div');

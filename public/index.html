@@ -69,52 +69,95 @@
     <!-- Main Grid -->
     <div class="grid grid-main mb-md">
 
-      <!-- Left Column: File Status + Commit History -->
+      <!-- Left Column: File Status + Commit History / Code Browser -->
       <div class="flex flex-col gap-md">
 
-        <!-- File Status Card -->
-        <div class="card" id="file-status-card">
-          <div class="card-header">
-            <div class="card-header-left">
-              <span class="card-header-icon">📄</span>
-              <span class="card-header-title">檔案變更</span>
-              <span class="badge badge-count" id="file-count-badge">0</span>
+        <!-- View Toggle Tabs -->
+        <div class="view-toggle-tabs">
+          <button class="view-tab active" id="tab-changes" onclick="switchLeftView('changes')">
+            📄 檔案變更
+          </button>
+          <button class="view-tab" id="tab-code" onclick="switchLeftView('code')">
+            🗂️ 專案程式碼
+          </button>
+        </div>
+
+        <!-- === Changes View (default) === -->
+        <div id="view-changes">
+
+          <!-- File Status Card -->
+          <div class="card" id="file-status-card">
+            <div class="card-header">
+              <div class="card-header-left">
+                <span class="card-header-icon">📄</span>
+                <span class="card-header-title">檔案變更</span>
+                <span class="badge badge-count" id="file-count-badge">0</span>
+              </div>
+              <div class="btn-group">
+                <button class="btn btn-ghost btn-sm" id="btn-select-all">全選</button>
+                <button class="btn btn-success btn-sm" id="btn-stage-all">⊕ Stage All</button>
+                <button class="btn btn-ghost btn-sm" id="btn-unstage-all">Unstage</button>
+                <button class="btn btn-ghost btn-sm" id="btn-refresh">🔄</button>
+              </div>
             </div>
-            <div class="btn-group">
-              <button class="btn btn-ghost btn-sm" id="btn-select-all">全選</button>
-              <button class="btn btn-success btn-sm" id="btn-stage-all">⊕ Stage All</button>
-              <button class="btn btn-ghost btn-sm" id="btn-unstage-all">Unstage</button>
-              <button class="btn btn-ghost btn-sm" id="btn-refresh">🔄</button>
+            <div class="card-body no-pad">
+              <ul class="file-list" id="file-list">
+                <li class="empty-state">
+                  <span class="icon">📭</span>
+                  <span class="message">尚未載入檔案。請先設定工作目錄。</span>
+                </li>
+              </ul>
             </div>
           </div>
-          <div class="card-body no-pad">
-            <ul class="file-list" id="file-list">
-              <li class="empty-state">
-                <span class="icon">📭</span>
-                <span class="message">尚未載入檔案。請先設定工作目錄。</span>
-              </li>
-            </ul>
+
+          <!-- Commit History Card -->
+          <div class="card" style="margin-top: 16px;">
+            <div class="card-header">
+              <div class="card-header-left">
+                <span class="card-header-icon">📜</span>
+                <span class="card-header-title">Commit 歷史</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="btn-refresh-log">🔄</button>
+            </div>
+            <div class="card-body no-pad">
+              <ul class="commit-list" id="commit-list">
+                <li class="empty-state">
+                  <span class="icon">📭</span>
+                  <span class="message">尚無 Commit 紀錄</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- === Code Browser View (hidden by default) === -->
+        <div id="view-code" class="hidden">
+          <div class="card" id="file-browser-card">
+            <div class="card-header">
+              <div class="card-header-left">
+                <span class="card-header-icon">🗂️</span>
+                <span class="card-header-title">專案程式碼</span>
+                <span class="badge badge-count" id="file-total-badge">0</span>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="btn-refresh-files">🔄</button>
+            </div>
+            <div class="file-browser-layout">
+              <div class="file-tree-panel" id="file-tree-panel">
+                <ul class="file-tree" id="file-tree">
+                  <li class="empty-state" style="padding: 30px 16px;"><span class="message">設定工作目錄後即可瀏覽程式碼</span></li>
+                </ul>
+              </div>
+              <div class="file-content-panel" id="file-content-panel">
+                <div class="file-content-header" id="file-content-header">
+                  <span>點擊左側檔案以查看內容</span>
+                </div>
+                <pre class="file-content-code" id="file-content-code"></pre>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- Commit History Card -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-header-left">
-              <span class="card-header-icon">📜</span>
-              <span class="card-header-title">Commit 歷史</span>
-            </div>
-            <button class="btn btn-ghost btn-sm" id="btn-refresh-log">🔄</button>
-          </div>
-          <div class="card-body no-pad">
-            <ul class="commit-list" id="commit-list">
-              <li class="empty-state">
-                <span class="icon">📭</span>
-                <span class="message">尚無 Commit 紀錄</span>
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       <!-- Right Column: Actions + Remotes -->
@@ -198,30 +241,7 @@
     </div>
   </div>
 
-  <!-- File Browser Section -->
-  <div class="card mb-md" id="file-browser-card">
-    <div class="card-header">
-      <div class="card-header-left">
-        <span class="card-header-icon">🗂️</span>
-        <span class="card-header-title">專案程式碼</span>
-        <span class="badge badge-count" id="file-total-badge">0</span>
-      </div>
-      <button class="btn btn-ghost btn-sm" id="btn-refresh-files">🔄</button>
-    </div>
-    <div class="file-browser-layout">
-      <div class="file-tree-panel" id="file-tree-panel">
-        <ul class="file-tree" id="file-tree">
-          <li class="empty-state" style="padding: 30px 16px;"><span class="message">設定工作目錄後即可瀏覽程式碼</span></li>
-        </ul>
-      </div>
-      <div class="file-content-panel" id="file-content-panel">
-        <div class="file-content-header" id="file-content-header">
-          <span>點擊左側檔案以查看內容</span>
-        </div>
-        <pre class="file-content-code" id="file-content-code"></pre>
-      </div>
-    </div>
-  </div>
+
 
   <!-- Toast Container -->
   <div class="toast-container" id="toast-container"></div>

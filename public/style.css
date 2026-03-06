@@ -1334,6 +1334,41 @@ textarea.input {
     background: rgba(56, 139, 253, 0.08);
 }
 
+/* ─── View Toggle Tabs ───────────────────────────────── */
+.view-toggle-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(17, 24, 39, 0.6);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+}
+
+.view-tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-family: 'Inter', sans-serif;
+}
+
+.view-tab:hover {
+    color: var(--text-secondary);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.view-tab.active {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
 /* ─── File Browser ───────────────────────────────────── */
 .file-browser-layout {
     display: flex;
