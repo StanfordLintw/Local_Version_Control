@@ -1,3 +1,8 @@
 node_modules/
 dist/
 .DS_Store
+server.out.log
+server.err.log
+*.log
+coverage/
+build/

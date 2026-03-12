@@ -3,13 +3,17 @@
 // ══════════════════════════════════════════════════════
 
 const API = '';
+const FILE_RENDER_LIMIT_NOTICE = 300;
 
 // ─── State ──────────────────────────────────────────────
 let state = {
     workdir: '',
-    branch: '—',
+    branch: '',
     isGitRepo: false,
     files: [],
+    totalFiles: 0,
+    truncated: false,
+    fileLimit: FILE_RENDER_LIMIT_NOTICE,
     remotes: [],
     commits: [],
     branches: [],
@@ -117,7 +121,7 @@ async function apiPost(path, body = {}) {
 
 // ─── Toast System ───────────────────────────────────────
 function showToast(message, type = 'info', duration = 4000) {
-    const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+    const icons = { success: 'OK', error: 'ERR', info: 'INFO', warning: 'WARN' };
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `<span>${icons[type] || ''}</span><span>${message}</span>`;
@@ -170,46 +174,50 @@ function renderStats() {
     dom.statAdded.textContent = added;
     dom.statStaged.textContent = staged;
     dom.statRemotes.textContent = state.remotes.length;
-    dom.fileCountBadge.textContent = state.files.length;
+    dom.fileCountBadge.textContent = state.totalFiles || state.files.length;
 }
 
 // ─── Render: File List ──────────────────────────────────
 function renderFileList() {
     if (state.files.length === 0) {
-        dom.fileList.innerHTML = `
-      <li class="empty-state">
-        <span class="icon">✨</span>
-        <span class="message">${state.isGitRepo ? '工作區很乾淨，沒有任何變更！' : '請先設定工作目錄'}</span>
+        dom.fileList.innerHTML = `<li class="empty-state">
+        <span class="icon">i</span>
+        <span class="message">${state.isGitRepo ? 'No local changes detected.' : 'Set a working directory first.'}</span>
       </li>`;
         return;
     }
 
-    dom.fileList.innerHTML = state.files.map((file, idx) => {
+    const warning = state.truncated
+        ? `<li class="empty-state">
+        <span class="icon">!</span>
+        <span class="message">Too many changes to render at once. Showing the first ${state.fileLimit} of ${state.totalFiles} files.</span>
+      </li>`
+        : '';
+
+    dom.fileList.innerHTML = warning + state.files.map((file, idx) => {
         const statusLabel = file.staged ? 'staged' : file.status;
         const statusClass = file.staged ? 'staged' : file.status;
         const checked = state.selectedFiles.has(file.path) ? 'checked' : '';
-        return `
-      <li class="file-item">
+        return `<li class="file-item">
         <input type="checkbox" data-file-idx="${idx}" data-file-path="${file.path}" ${checked} />
         <span class="file-status ${statusClass}">${statusLabel}</span>
         <span class="file-path" title="${file.path}">${file.path}</span>
       </li>`;
     }).join('');
 
-    // Bind checkbox events
     dom.fileList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', (e) => {
-            const path = e.target.dataset.filePath;
+            const selectedPath = e.target.dataset.filePath;
             if (e.target.checked) {
-                state.selectedFiles.add(path);
+                state.selectedFiles.add(selectedPath);
             } else {
-                state.selectedFiles.delete(path);
+                state.selectedFiles.delete(selectedPath);
             }
         });
     });
 }
 
-// ─── Render: Commit List ────────────────────────────────
+// Render: Commit List ────────────────────────────────
 function renderCommitList() {
     if (state.commits.length === 0) {
         dom.commitList.innerHTML = `
@@ -311,17 +319,20 @@ function renderPushSelects() {
 async function fetchStatus() {
     try {
         const data = await apiGet('/api/status');
-        state.branch = data.branch || '—';
+        state.branch = data.branch || '';
         state.files = data.files || [];
+        state.totalFiles = data.totalFiles || state.files.length;
+        state.truncated = Boolean(data.truncated);
+        state.fileLimit = data.fileLimit || FILE_RENDER_LIMIT_NOTICE;
         state.isGitRepo = data.isGitRepo;
-        dom.branchBadge.textContent = state.branch;
+        dom.branchBadge.textContent = state.branch || 'No branch';
 
         if (state.isGitRepo) {
             dom.statusDot.className = 'status-dot connected';
-            dom.statusDot.title = '已連線 Git Repo';
+            dom.statusDot.title = 'Git repository connected';
         } else {
             dom.statusDot.className = 'status-dot disconnected';
-            dom.statusDot.title = '非 Git Repo';
+            dom.statusDot.title = 'Current folder is not a Git repository';
         }
 
         renderStats();
@@ -980,6 +991,14 @@ dom.modalFaq.addEventListener('click', (e) => {
 });
 
 // ─── Auto-refresh ───────────────────────────────────────
+function applyLocalizedText() {
+    document.title = 'Local Version Control';
+    const description = document.querySelector('meta[name="description"]');
+    if (description) {
+        description.setAttribute('content', 'Local Git UI for commits, remotes, pushes, and project browsing.');
+    }
+}
+
 let refreshInterval = null;
 
 function startAutoRefresh() {
@@ -993,6 +1012,7 @@ function startAutoRefresh() {
 
 // ─── Init ───────────────────────────────────────────────
 async function init() {
+    applyLocalizedText();
     // Check if workdir was already set (e.g., server restart)
     try {
         const data = await apiGet('/api/workdir');

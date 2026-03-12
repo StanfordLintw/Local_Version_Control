@@ -107,3 +107,11 @@ npm run build:all
    - 選擇 Remote 和 分支（通常是 master 或 main），點擊「Push 推送」。
 
 > 更詳細的操作說明，請點擊畫面右上角的「❓ 說明」按鈕查看。
+# Local Version Control
+
+Start here:
+
+- User manual: [USER_MANUAL.md](./USER_MANUAL.md)
+- In-app manual page: `http://localhost:3000/manual`
+
+If parts of this README appear garbled, use `USER_MANUAL.md` as the primary documentation.

@@ -11,8 +11,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/manual', (req, res) => {
+    res.sendFile(path.join(__dirname, 'USER_MANUAL.md'));
+});
+
 // Current working directory for git operations
 let currentWorkDir = '';
+const STATUS_FILE_LIMIT = 300;
 
 // Helper: execute a git command in the working directory
 function gitExec(args, cwd) {
@@ -71,11 +76,12 @@ app.get('/api/status', async (req, res) => {
 
         // Get status in porcelain format
         const statusRaw = await gitExec(['status', '--porcelain', '-uall'], currentWorkDir);
-        const files = statusRaw
-            ? statusRaw.split('\n').map(line => {
-                const indexStatus = line.charAt(0);
-                const workTreeStatus = line.charAt(1);
-                const filePath = line.substring(3);
+        const allFiles = statusRaw
+            ? statusRaw.split('\n').filter(Boolean).map(line => {
+                const match = line.match(/^(.)(.)\s+(.*)$/);
+                const indexStatus = match ? match[1] : line.charAt(0);
+                const workTreeStatus = match ? match[2] : line.charAt(1);
+                const filePath = match ? match[3].trim() : line.substring(2).trim();
                 let status = 'modified';
                 if (indexStatus === '?' || workTreeStatus === '?') status = 'untracked';
                 else if (indexStatus === 'A') status = 'added';
@@ -87,6 +93,9 @@ app.get('/api/status', async (req, res) => {
                 return { path: filePath, status, staged, indexStatus, workTreeStatus };
             })
             : [];
+        const totalFiles = allFiles.length;
+        const truncated = totalFiles > STATUS_FILE_LIMIT;
+        const files = truncated ? allFiles.slice(0, STATUS_FILE_LIMIT) : allFiles;
 
         // Check if it's a git repo
         let isGitRepo = true;
@@ -96,7 +105,7 @@ app.get('/api/status', async (req, res) => {
             isGitRepo = false;
         }
 
-        res.json({ branch, files, isGitRepo, workdir: currentWorkDir });
+        res.json({ branch, files, isGitRepo, workdir: currentWorkDir, totalFiles, truncated, fileLimit: STATUS_FILE_LIMIT });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
